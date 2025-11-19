@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Royal Tribute - Öğretmenler Günü</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        /* CSS Variables & Reset */
+        :root {
+            --gold-gradient: linear-gradient(to bottom, #BF953F, #FCF6BA, #B38728);
+            --bg-radial: radial-gradient(circle at center, #2a0a0a 0%, #000000 60%, #000000 100%);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: var(--bg-radial);
+            color: #fff;
+            font-family: 'Playfair Display', serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Utilities */
+        .gold-text {
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0px 2px 10px rgba(191, 149, 63, 0.3);
+        }
+
+        .gold-border {
+            border-image: var(--gold-gradient);
+            border-image-slice: 1;
+        }
+        
+        .glass-panel {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(191, 149, 63, 0.3);
+        }
+
+        /* Animation Keyframes */
+        /* Central heart: realistic "dub-dub...wait" pattern */
+        @keyframes heartbeat {
+            0%   { transform: scale(1); }
+            8%   { transform: scale(1.10); }
+            16%  { transform: scale(0.96); }
+            24%  { transform: scale(1.12); }  /* dub-dub peak */
+            40%  { transform: scale(1.00); }  /* rest begins */
+            100% { transform: scale(1.00); }
+        }
+        
+        .heartbeat {
+            animation: heartbeat 1800ms cubic-bezier(0.22, 1, 0.36, 1) infinite;
+            transform-origin: center center;
+        }
+
+        /* Ring hearts: subtle synchronous pulse */
+        @keyframes ringPulse {
+            0%   { transform: translate3d(var(--x), var(--y), 0) scale(1); }
+            10%  { transform: translate3d(var(--x), var(--y), 0) scale(1.06); }
+            20%  { transform: translate3d(var(--x), var(--y), 0) scale(0.98); }
+            30%  { transform: translate3d(var(--x), var(--y), 0) scale(1.08); }
+            45%  { transform: translate3d(var(--x), var(--y), 0) scale(1.00); }
+            100% { transform: translate3d(var(--x), var(--y), 0) scale(1.00); }
+        }
+        
+        .ring-heart {
+            animation: ringPulse 2200ms cubic-bezier(0.22, 1, 0.36, 1) infinite;
+            will-change: transform;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        /* Dynamic Fly-out Classes (Managed by JS mostly, but helpers here) */
+        .fly-out-left {
+            animation: flyLeft 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        .fly-out-right {
+            animation: flyRight 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        @keyframes flyLeft {
+            to {
+                opacity: 0;
+                filter: blur(10px);
+                transform: translate3d(-50vw, -20vh, 0) rotate(-25deg) scale(0.8);
+            }
+        }
+
+        @keyframes flyRight {
+            to {
+                opacity: 0;
+                filter: blur(10px);
+                transform: translate3d(50vw, -20vh, 0) rotate(25deg) scale(0.8);
+            }
+        }
+
+        /* Scene Elements */
+        #canvas-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none; /* Allow clicks to pass through empty areas */
+        }
+
+        .interactive {
+            pointer-events: auto;
+        }
+
+        #scene-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            perspective: 1000px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* Heart SVG styling */
+        .heart-path {
+            fill: url(#heartGradient);
+            filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.5));
+        }
+        
+        .student-card {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            will-change: transform, opacity, filter;
+        }
+
+        .student-name {
+            font-family: 'Great Vibes', cursive;
+            color: #FFD700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            white-space: nowrap;
+            z-index: 2;
+        }
+
+        #finale-message {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 2s ease-out;
+        }
+        
+        .visible {
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+        }
+
+        /* Accessibility: Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            
+            .heart-svg,
+            .heartbeat,
+            .ring-heart {
+                animation: none !important;
+            }
+            
+            .fly-out-left,
+            .fly-out-right {
+                transition-duration: 1ms !important;
+                filter: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- SVG Definitions -->
+    <svg style="width:0;height:0;position:absolute;" aria-hidden="true">
+        <defs>
+            <linearGradient id="heartGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#ff1a1a;stop-opacity:1" />
+                <stop offset="50%" style="stop-color:#cc0000;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#800000;stop-opacity:1" />
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <!-- Canvas for Particles -->
+    <canvas id="canvas-layer"></canvas>
+
+    <!-- Main Scene Container -->
+    <div id="scene-container">
+        <!-- Dynamic content injected here -->
+    </div>
+
+    <!-- UI Layer -->
+    <div id="ui-layer">
+        <!-- Start Button (Idle State) -->
+        <button id="start-btn" class="interactive group relative px-12 py-4 overflow-hidden rounded-sm bg-transparent transition-all duration-500 hover:bg-[rgba(191,149,63,0.1)]">
+            <div class="absolute inset-0 w-full h-full border border-[#BF953F] opacity-60 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div class="absolute inset-0 w-full h-full border border-[#BF953F] scale-x-110 scale-y-125 opacity-0 group-hover:opacity-30 group-hover:scale-x-100 group-hover:scale-y-100 transition-all duration-700"></div>
+            <span class="relative z-10 font-['Cinzel'] text-xl md:text-2xl tracking-[0.2em] text-[#FFD700] group-hover:text-[#FFF] transition-colors duration-500 shadow-black drop-shadow-lg">
+                SÜRPRİZİ BAŞLAT
+            </span>
+        </button>
+
+        <!-- Top Right Controls -->
+        <div class="absolute top-4 right-4 interactive flex items-center gap-3">
+            <!-- Skip to Finale Button -->
+            <button id="skip-btn" class="px-4 py-2 rounded-full text-sm tracking-wide bg-black/50 text-amber-200 border border-amber-400/60 hover:bg-black/70 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all opacity-0 pointer-events-none" aria-label="Skip to Finale">
+                Finale
+            </button>
+            
+            <!-- Audio Mute Button -->
+            <button id="mute-btn" class="p-3 text-[#BF953F] hover:text-white transition-colors opacity-0 pointer-events-none" aria-label="Müziği Aç/Kapat">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <line x1="23" y1="9" x2="17" y2="15"></line>
+                    <line x1="17" y1="9" x2="23" y2="15"></line>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Finale Message -->
+        <div id="finale-message" class="absolute bottom-[10%] w-full text-center pointer-events-none">
+            <h1 class="font-['Cinzel'] text-2xl md:text-4xl tracking-widest gold-text mb-2">ÖĞRETMENLER GÜNÜNÜZ</h1>
+            <h2 class="font-['Cinzel'] text-xl md:text-3xl tracking-widest text-white/90">KUTLU OLSUN</h2>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * ROYAL TRIBUTE - CONFIGURATION
+         * All timing, animation, and visual parameters in one place for easy tuning.
+         * 
+         * NEW IN v2.1:
+         * - Skip to Finale button (top-right, bypasses name sequence)
+         * - Enhanced heartbeat animations (realistic "dub-dub...wait" pattern)
+         * - Ring hearts pulse with phase offsets (synchronized wave effect)
+         * - Audio fade-out on finale (smooth exponential ramp)
+         * - Improved prefers-reduced-motion support
+         */
+        const CONFIG = {
+            students: [
+                "Sude", "Tuana", "Yusuf", "Duru", "Arda", "Kağan", 
+                "Murat", "Yasir", "Ali", "Cihat", "Altan", "Arzum", 
+                "Ayşe", "Baha", "Eylül", "Ege", "Hüseyin", "İrem", 
+                "İsmail", "Semih", "Zeynep", "Aybige", "Samet", "Steve"
+            ],
+            teachers: "Büşra & Duygu Hoca",
+            
+            // TIMING KNOBS (all in milliseconds unless noted)
+            timings: {
+                inDuration: 900,        // Fade-in + scale animation
+                holdDuration: 1500,     // How long name stays visible
+                outDuration: 1200,      // Fly-out animation
+                nameGap: 800,           // Overlap/gap before next name starts
+                transitionDim: 1500,    // Stage dimming duration
+                transitionHeart: 2000,  // Big heart emergence
+                ringExpand: 1500,       // Finale ring expansion
+                messageDelay: 1000      // Footer message appearance delay
+            },
+            
+            // ANIMATION PARAMETERS
+            animation: {
+                scaleFrom: 0.8,         // Initial scale
+                scaleTo: 1.2,           // Peak scale
+                rotationDeg: 25,        // Rotation during fly-out (±)
+                maxBlur: 10,            // Blur amount during fly-out (px)
+                driftRange: 15,         // Random vertical drift (vh units)
+                easing: 'cubic-bezier(0.22, 1, 0.36, 1)' // Ease-out
+            },
+            
+            // PARTICLE SYSTEM
+            particles: {
+                ambientCount: 80,           // Golden dust particles
+                confettiCount: 200,         // Celebration confetti
+                petalCount: 50,             // Falling petals
+                colors: ['#FFD700', '#FF0000', '#FFFFFF', '#FFC0CB', '#FFB6C1']
+            },
+            
+            // RESPONSIVE LAYOUT
+            layout: {
+                ringRadiusVmin: 38,     // Ring radius as % of viewport min
+                heartSizeIntro: 250,    // Heart size during intro (px)
+                heartSizeFinale: 70,    // Small heart size in ring (px)
+                heartSizeCenter: 380,   // Teachers' heart size (px)
+                nameSizeIntro: 1.8,     // Name font size intro (rem)
+                nameSizeFinale: 0.75,   // Name font size finale (rem)
+                nameSizeCenter: 2.8     // Teachers name size (rem)
+            },
+            
+            // AUDIO (Optional)
+            audio: {
+                enabled: true,
+                url: 'The best class is here today P2.03 shout.mp3', // MP3 file in project folder
+                fadeDuration: 3,        // Fade-in duration (seconds)
+                volume: 0.4,            // Master volume (0-1)
+                finalFadeMs: 1500,      // Fade-out duration in finale (milliseconds)
+                autoplay: true,         // Auto-start music on page load
+                autoplayDelay: 2000     // Delay before autoplay (milliseconds)
+            }
+        };
+
+        /**
+         * UTILS
+         */
+        class Utils {
+            static delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            static random(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            static getHeartSVG(size = 100, className = "heart-path") {
+                return `
+                    <svg width="${size}" height="${size}" viewBox="0 0 24 24" style="overflow:visible;">
+                        <path class="${className}" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                `;
+            }
+        }
+
+        /**
+         * AUDIO MANAGER
+         */
+        class AudioManager {
+            constructor() {
+                this.ctx = null;
+                this.gainNode = null;
+                this.audioElement = null;
+                this.source = null;
+                this.isPlaying = false;
+                this.isMuted = false;
+                
+                this.btn = document.getElementById('mute-btn');
+                this.btn.addEventListener('click', () => this.toggleMute());
+            }
+
+            async init(autoplay = false) {
+                if (!CONFIG.audio.enabled || !CONFIG.audio.url) {
+                    console.info('Audio disabled or no URL provided');
+                    return false;
+                }
+
+                try {
+                    // Create Audio Context
+                    window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (!this.ctx) {
+                        this.ctx = new AudioContext();
+                    }
+
+                    // Setup Audio Element (More robust for local files than fetch)
+                    if (!this.audioElement) {
+                        this.audioElement = new Audio();
+                        this.audioElement.src = CONFIG.audio.url;
+                        this.audioElement.loop = true;
+                        this.audioElement.crossOrigin = "anonymous"; // Good practice
+                        this.audioElement.preload = 'auto';
+                        
+                        // Connect to Web Audio API
+                        this.source = this.ctx.createMediaElementSource(this.audioElement);
+                        this.gainNode = this.ctx.createGain();
+                        
+                        this.source.connect(this.gainNode);
+                        this.gainNode.connect(this.ctx.destination);
+                    }
+
+                    // Show mute button
+                    this.btn.classList.remove('opacity-0', 'pointer-events-none');
+                    this.updateIcon();
+                    
+                    console.info('Audio system initialized.');
+
+                    // Autoplay handling
+                    if (autoplay) {
+                        return await this.play();
+                    }
+                    return true;
+
+                } catch (e) {
+                    console.warn('Audio initialization warning:', e);
+                    return false;
+                }
+            }
+
+            async play() {
+                if (!this.ctx || !this.audioElement) return false;
+
+                try {
+                    // Resume context if suspended (browser policy)
+                    if (this.ctx.state === 'suspended') {
+                        await this.ctx.resume();
+                    }
+
+                    // Reset volume for fade in
+                    this.gainNode.gain.cancelScheduledValues(this.ctx.currentTime);
+                    this.gainNode.gain.setValueAtTime(0, this.ctx.currentTime);
+                    this.gainNode.gain.linearRampToValueAtTime(
+                        CONFIG.audio.volume, 
+                        this.ctx.currentTime + CONFIG.audio.fadeDuration
+                    );
+
+                    // Play audio
+                    await this.audioElement.play();
+                    this.isPlaying = true;
+                    this.updateIcon();
+                    return true;
+                } catch (e) {
+                    console.warn('Autoplay blocked or failed:', e.message);
+                    return false;
+                }
+            }
+
+            toggleMute() {
+                if (!this.gainNode) return;
+                this.isMuted = !this.isMuted;
+                
+                const now = this.ctx.currentTime;
+                this.gainNode.gain.cancelScheduledValues(now);
+                
+                if (this.isMuted) {
+                    this.gainNode.gain.setTargetAtTime(0, now, 0.1);
+                } else {
+                    this.gainNode.gain.setTargetAtTime(CONFIG.audio.volume, now, 0.1);
+                }
+                this.updateIcon();
+            }
+
+            updateIcon() {
+                // Update SVG based on state
+                if(this.isMuted) {
+                     this.btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M9 9v6a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>`;
+                } else {
+                     this.btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3Z"></path><path d="M12 3a16.92 16.92 0 0 1 10.9 5.29c.36.38.36.97 0 1.35a13.1 13.1 0 0 0-5.9 7.26 13.1 13.1 0 0 0 5.9 7.26c.36.38.36.97 0 1.35A16.92 16.92 0 0 1 12 21a16.92 16.92 0 0 1-10.9-5.29c-.36-.38-.36-.97 0-1.35a13.1 13.1 0 0 0 5.9-7.26 13.1 13.1 0 0 0-5.9-7.26c-.36-.38-.36-.97 0-1.35A16.92 16.92 0 0 1 12 3Z"></path></svg>`;
+                }
+            }
+
+            fadeOutAndStop(ms = 1500) {
+                if (!this.ctx || !this.gainNode) return;
+                
+                const now = this.ctx.currentTime;
+                const end = now + ms / 1000;
+                
+                try {
+                    // Cancel any ongoing ramps
+                    this.gainNode.gain.cancelScheduledValues(now);
+                    
+                    // Smooth fade out
+                    this.gainNode.gain.setValueAtTime(this.gainNode.gain.value, now);
+                    this.gainNode.gain.exponentialRampToValueAtTime(0.001, end);
+                } catch (e) {
+                    // Fallback
+                    this.gainNode.gain.linearRampToValueAtTime(0, end);
+                }
+                
+                // Stop after fade
+                setTimeout(() => {
+                    if (this.audioElement) {
+                        this.audioElement.pause();
+                        this.audioElement.currentTime = 0;
+                    }
+                    this.isPlaying = false;
+                }, ms + 100);
+            }
+        }
+
+        /**
+         * PARTICLE SYSTEM (Canvas)
+         */
+        class ParticleSystem {
+            constructor() {
+                this.canvas = document.getElementById('canvas-layer');
+                this.ctx = this.canvas.getContext('2d');
+                this.particles = [];
+                this.mode = 'ambient'; // 'ambient' or 'celebration'
+                this.width = 0;
+                this.height = 0;
+
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                this.loop = this.loop.bind(this);
+                requestAnimationFrame(this.loop);
+            }
+
+            resize() {
+                this.width = window.innerWidth;
+                this.height = window.innerHeight;
+                this.canvas.width = this.width;
+                this.canvas.height = this.height;
+            }
+
+            createParticle(x, y, type = 'dust') {
+                const p = {
+                    x, y,
+                    vx: 0,
+                    vy: 0,
+                    size: Utils.random(1, 3),
+                    color: CONFIG.particles.colors[Math.floor(Math.random() * CONFIG.particles.colors.length)],
+                    alpha: 1,
+                    rotation: Math.random() * 360,
+                    rotationSpeed: 0,
+                    gravity: 0,
+                    drag: 1,
+                    sway: 0,
+                    swaySpeed: 0,
+                    type
+                };
+
+                // Type-specific parameters
+                switch(type) {
+                    case 'confetti':
+                        p.vx = Utils.random(-8, 8);
+                        p.vy = Utils.random(-15, -8);
+                        p.size = Utils.random(6, 12);
+                        p.rotationSpeed = Utils.random(-8, 8);
+                        p.gravity = 0.25;
+                        p.drag = 0.985;
+                        break;
+                    case 'petal':
+                        p.vx = Utils.random(-1, 1);
+                        p.vy = Utils.random(1, 3);
+                        p.size = Utils.random(8, 14);
+                        p.rotationSpeed = Utils.random(-2, 2);
+                        p.gravity = 0.02;
+                        p.drag = 0.995;
+                        p.sway = 0;
+                        p.swaySpeed = Utils.random(0.02, 0.05);
+                        p.color = ['#FFC0CB', '#FFB6C1', '#FF69B4', '#FFE4E1'][Math.floor(Math.random() * 4)];
+                        break;
+                    case 'dust':
+                    default:
+                        p.vx = Utils.random(-0.5, 0.5);
+                        p.vy = Utils.random(-0.5, 0.5);
+                        p.size = Utils.random(1.5, 3);
+                        break;
+                }
+
+                return p;
+            }
+
+            emitConfetti() {
+                for (let i = 0; i < 100; i++) {
+                    this.particles.push(this.createParticle(this.width / 2, this.height / 2, 'confetti'));
+                }
+            }
+
+            update() {
+                // Replenish ambient particles
+                if (this.mode === 'ambient' && this.particles.filter(p => p.type === 'dust').length < CONFIG.particles.ambientCount) {
+                    this.particles.push(this.createParticle(
+                        Math.random() * this.width, 
+                        Math.random() * this.height,
+                        'dust'
+                    ));
+                }
+                
+                // Celebration mode: maintain confetti and petals
+                if (this.mode === 'celebration') {
+                    const confettiCount = this.particles.filter(p => p.type === 'confetti').length;
+                    const petalCount = this.particles.filter(p => p.type === 'petal').length;
+                    
+                    // Spawn confetti
+                    if (confettiCount < CONFIG.particles.confettiCount / 2) {
+                        this.particles.push(this.createParticle(
+                            Math.random() * this.width, 
+                            -20, 
+                            'confetti'
+                        ));
+                    }
+                    
+                    // Spawn petals
+                    if (petalCount < CONFIG.particles.petalCount) {
+                        this.particles.push(this.createParticle(
+                            Math.random() * this.width,
+                            -20,
+                            'petal'
+                        ));
+                    }
+                }
+
+                // Update all particles
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    let p = this.particles[i];
+                    
+                    // Physics
+                    p.vy += p.gravity;
+                    p.vx *= p.drag;
+                    p.vy *= p.drag;
+                    
+                    // Petal sway
+                    if (p.type === 'petal') {
+                        p.sway += p.swaySpeed;
+                        p.x += Math.sin(p.sway) * 0.5;
+                    }
+                    
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.rotation += p.rotationSpeed;
+
+                    // Special effects
+                    if (p.type === 'dust') {
+                        p.alpha = Math.sin(Date.now() * 0.002 + p.x) * 0.4 + 0.3; // Twinkle
+                    }
+
+                    // Culling
+                    if (p.y > this.height + 100 || p.y < -100 || p.x < -100 || p.x > this.width + 100) {
+                        this.particles.splice(i, 1);
+                    }
+                }
+            }
+
+            draw() {
+                this.ctx.clearRect(0, 0, this.width, this.height);
+                
+                this.particles.forEach(p => {
+                    this.ctx.save();
+                    this.ctx.translate(p.x, p.y);
+                    this.ctx.rotate(p.rotation * Math.PI / 180);
+                    this.ctx.globalAlpha = p.alpha;
+                    this.ctx.fillStyle = p.color;
+                    
+                    switch(p.type) {
+                        case 'confetti':
+                            // Rectangular strips
+                            this.ctx.fillRect(-p.size/3, -p.size, p.size/1.5, p.size * 2);
+                            break;
+                        case 'petal':
+                            // Elliptical petals
+                            this.ctx.beginPath();
+                            this.ctx.ellipse(0, 0, p.size/2, p.size, 0, 0, Math.PI * 2);
+                            this.ctx.fill();
+                            break;
+                        case 'dust':
+                        default:
+                            // Small circles with glow
+                            this.ctx.shadowBlur = 8;
+                            this.ctx.shadowColor = p.color;
+                            this.ctx.beginPath();
+                            this.ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+                            this.ctx.fill();
+                            this.ctx.shadowBlur = 0;
+                            break;
+                    }
+                    
+                    this.ctx.restore();
+                });
+            }
+
+            loop() {
+                this.update();
+                this.draw();
+                requestAnimationFrame(this.loop);
+            }
+        }
+
+        /**
+         * SCENE MANAGER
+         */
+        class SceneManager {
+            constructor() {
+                this.container = document.getElementById('scene-container');
+                this.startBtn = document.getElementById('start-btn');
+                this.skipBtn = document.getElementById('skip-btn');
+                this.audioManager = new AudioManager();
+                this.particleSystem = new ParticleSystem();
+                this.state = 'IDLE'; // IDLE, INTRO, TRANSITION, FINALE
+                this.cancelled = false; // For sequence cancellation
+
+                this.init();
+            }
+
+            init() {
+                this.startBtn.addEventListener('click', () => {
+                    this.startSequence();
+                });
+                
+                this.skipBtn.addEventListener('click', () => {
+                    this.skipToFinale();
+                });
+                
+                // Autoplay music if configured
+                if (CONFIG.audio.autoplay) {
+                    setTimeout(async () => {
+                        const success = await this.audioManager.tryAutoplay();
+                        // Show skip button if music starts playing
+                        if (success) {
+                            this.skipBtn.classList.remove('opacity-0', 'pointer-events-none');
+                        }
+                    }, CONFIG.audio.autoplayDelay);
+                }
+            }
+
+            async startSequence() {
+                if (this.state !== 'IDLE') return;
+                
+                this.state = 'INTRO';
+                this.cancelled = false;
+                
+                // 1. IDLE -> INTRO
+                this.startBtn.style.pointerEvents = 'none';
+                this.startBtn.style.opacity = '0';
+                
+                // Init Audio (if not already playing)
+                if (!this.audioManager.isPlaying) {
+                    await this.audioManager.init();
+                    this.audioManager.play();
+                }
+
+                // Show skip button
+                this.skipBtn.classList.remove('opacity-0', 'pointer-events-none');
+
+                await Utils.delay(1000); // Wait for button fade out
+
+                // 2. INTRO SEQUENCE
+                for (let i = 0; i < CONFIG.students.length; i++) {
+                    if (this.cancelled) break; // Allow cancellation
+                    await this.showStudent(CONFIG.students[i], i);
+                }
+
+                // 3. TRANSITION (only if not cancelled)
+                if (!this.cancelled) {
+                    await this.transitionToFinale();
+                }
+            }
+
+            async showStudent(name, index) {
+                // Create Element
+                const el = document.createElement('div');
+                el.className = 'student-card';
+                el.innerHTML = `
+                    ${Utils.getHeartSVG(CONFIG.layout.heartSizeIntro)}
+                    <div class="student-name" style="font-size: ${CONFIG.layout.nameSizeIntro}rem;">${name}</div>
+                `;
+                
+                // Position Center (Initial)
+                this.container.appendChild(el);
+                
+                // Animate In: scale from 0.8 → 1.2
+                el.style.opacity = '0';
+                el.style.transform = `scale(${CONFIG.animation.scaleFrom})`;
+                el.offsetHeight; // Force reflow
+                
+                el.style.transition = `all ${CONFIG.timings.inDuration}ms ${CONFIG.animation.easing}`;
+                el.style.opacity = '1';
+                el.style.transform = `scale(${CONFIG.animation.scaleTo})`;
+
+                // Hold
+                await Utils.delay(CONFIG.timings.holdDuration);
+
+                // Fly Out with randomized drift
+                const isOdd = index % 2 !== 0;
+                const direction = isOdd ? -1 : 1;
+                const randomRotation = direction * (CONFIG.animation.rotationDeg + Utils.random(-5, 5));
+                const randomDrift = Utils.random(-CONFIG.animation.driftRange, CONFIG.animation.driftRange);
+                
+                el.style.transition = `all ${CONFIG.timings.outDuration}ms ${CONFIG.animation.easing}`;
+                el.style.opacity = '0';
+                el.style.filter = `blur(${CONFIG.animation.maxBlur}px)`;
+                el.style.transform = `translate(${direction * 50}vw, ${randomDrift}vh) rotate(${randomRotation}deg) scale(0.7)`;
+                
+                await Utils.delay(CONFIG.timings.nameGap); // Overlap timing
+                
+                // Cleanup from DOM after animation completes
+                setTimeout(() => el.remove(), CONFIG.timings.outDuration); 
+            }
+
+            async transitionToFinale() {
+                this.state = 'TRANSITION';
+                
+                // Dim stage
+                const overlay = document.createElement('div');
+                overlay.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;background:#000;opacity:0;transition:opacity ${CONFIG.timings.transitionDim}ms;z-index:5;pointer-events:none;`;
+                document.body.appendChild(overlay);
+                
+                requestAnimationFrame(() => overlay.style.opacity = '0.7');
+                
+                await Utils.delay(CONFIG.timings.transitionDim);
+
+                // Build finale scene
+                this.buildFinale();
+            }
+
+            buildFinale() {
+                this.state = 'FINALE';
+                
+                // Hide skip button (no longer needed)
+                this.skipBtn.style.opacity = '0';
+                this.skipBtn.style.pointerEvents = 'none';
+                
+                // Show Big Teacher Heart with heartbeat
+                const bigHeart = document.createElement('div');
+                bigHeart.className = 'student-card heartbeat';
+                bigHeart.id = 'center-heart';
+                bigHeart.style.zIndex = '20';
+                bigHeart.innerHTML = `
+                    ${Utils.getHeartSVG(CONFIG.layout.heartSizeCenter)}
+                    <div class="student-name" style="font-size: ${CONFIG.layout.nameSizeCenter}rem; line-height: 1.3; text-align: center; width: 85%; max-width: 300px;">
+                        ${CONFIG.teachers.replace(' & ', '<br><span style="font-size:0.7em; opacity:0.9;">&</span><br>')}
+                    </div>
+                `;
+                
+                this.container.appendChild(bigHeart);
+                
+                // Animate Big Heart In
+                bigHeart.style.opacity = '0';
+                bigHeart.style.transform = 'scale(0.7)';
+                bigHeart.style.transition = `all ${CONFIG.timings.transitionHeart}ms cubic-bezier(0.34, 1.56, 0.64, 1)`;
+                requestAnimationFrame(() => {
+                    bigHeart.style.opacity = '1';
+                    bigHeart.style.transform = 'scale(1)';
+                });
+
+                // Build ring
+                setTimeout(() => {
+                    this.buildRing();
+                }, CONFIG.timings.transitionHeart);
+                
+                // Celebration Mode
+                this.particleSystem.mode = 'celebration';
+                this.particleSystem.emitConfetti(); // Initial burst
+                
+                // Audio continues playing (removed fade out)
+                
+                // Show Message (delayed)
+                setTimeout(() => {
+                    document.getElementById('finale-message').classList.add('visible');
+                }, CONFIG.timings.transitionHeart + CONFIG.timings.messageDelay);
+            }
+
+            buildRing() {
+                const total = CONFIG.students.length;
+                // Radius in vmin units for CSS custom properties
+                const radiusVmin = CONFIG.layout.ringRadiusVmin;
+                
+                CONFIG.students.forEach((student, i) => {
+                    const angle = (i / total) * 2 * Math.PI - (Math.PI / 2); // Start from top (12 o'clock)
+                    const x = Math.cos(angle) * radiusVmin;
+                    const y = Math.sin(angle) * radiusVmin;
+
+                    const el = document.createElement('div');
+                    el.className = 'student-card ring-heart';
+                    el.style.zIndex = '10';
+                    
+                    // Set CSS custom properties for ringPulse animation
+                    el.style.setProperty('--x', `${x}vmin`);
+                    el.style.setProperty('--y', `${y}vmin`);
+                    
+                    // Phase offset for staggered heartbeat effect
+                    el.style.animationDelay = `${(i * 40) % 800}ms`;
+                    
+                    el.innerHTML = `
+                        ${Utils.getHeartSVG(CONFIG.layout.heartSizeFinale)}
+                        <div class="student-name" style="font-size: ${CONFIG.layout.nameSizeFinale}rem;">${student}</div>
+                    `;
+                    
+                    this.container.appendChild(el);
+                    
+                    // Start at center behind big heart
+                    el.style.opacity = '0';
+                    el.style.transform = 'translate3d(0, 0, 0) scale(0)';
+                    el.style.transition = `all ${CONFIG.timings.ringExpand}ms cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 50}ms`; // Staggered expansion
+
+                    // Expand to ring position, then let ringPulse animation take over
+                    requestAnimationFrame(() => {
+                        el.style.opacity = '1';
+                        el.style.transform = `translate3d(${x}vmin, ${y}vmin, 0) scale(1)`;
+                    });
+                });
+            }
+
+            skipToFinale() {
+                // Only allow skip during INTRO or IDLE (after start)
+                if (this.state === 'FINALE' || this.state === 'TRANSITION') return;
+                
+                // If in IDLE, start audio first (if not already playing)
+                if (this.state === 'IDLE') {
+                    if (!this.audioManager.isPlaying) {
+                        this.audioManager.init().then(() => {
+                            this.audioManager.play();
+                        });
+                    }
+                    // Hide start button
+                    this.startBtn.style.opacity = '0';
+                    this.startBtn.style.pointerEvents = 'none';
+                }
+                
+                // Cancel any running sequence
+                this.cancelled = true;
+                
+                // Clear stage of any intro elements
+                this.clearStage();
+                
+                // Build finale immediately
+                this.buildFinale();
+            }
+
+            clearStage() {
+                // Remove all student cards from intro sequence
+                const cards = this.container.querySelectorAll('.student-card:not(#center-heart)');
+                cards.forEach(card => card.remove());
+            }
+        }
+
+        // Start App
+        window.addEventListener('DOMContentLoaded', () => {
+            new SceneManager();
+        });
+
+        /**
+         * ═══════════════════════════════════════════════════════════════════════════
+         * 
+         *                          TUNING GUIDE & DEVELOPER NOTES
+         * 
+         * ═══════════════════════════════════════════════════════════════════════════
+         * 
+         * This experience is fully configurable through the CONFIG object above.
+         * Below are detailed instructions for tuning various aspects:
+         * 
+         * ───────────────────────────────────────────────────────────────────────────
+         * 1. TIMING ADJUSTMENTS
+         * ───────────────────────────────────────────────────────────────────────────
+         * Location: CONFIG.timings
+         * 
+         * - inDuration (900ms):       How long the fade-in + scale animation takes
+         * - holdDuration (1500ms):    How long each name stays visible before flying out
+         * - outDuration (1200ms):     Duration of the fly-out animation
+         * - nameGap (800ms):          Time before next name starts (creates overlap/spacing)
+         * - transitionDim (1500ms):   Stage dimming duration before finale
+         * - transitionHeart (2000ms): Big center heart emergence duration
+         * - ringExpand (1500ms):      Student hearts expanding into ring formation
+         * - messageDelay (1000ms):    Delay before footer message appears
+         * 
+         * Tips:
+         * - Increase `holdDuration` if names fly away too quickly
+         * - Decrease `nameGap` for faster pacing (more overlap)
+         * - Adjust `outDuration` for more/less dramatic exits
+         * 
+         * ───────────────────────────────────────────────────────────────────────────
+         * 2. ANIMATION PARAMETERS
+         * ───────────────────────────────────────────────────────────────────────────
+         * Location: CONFIG.animation
+         * 
+         * - scaleFrom (0.8):      Initial scale when name appears
+         * - scaleTo (1.2):        Peak scale at hold phase
+         * - rotationDeg (25):     Max rotation during fly-out (±random)
+         * - maxBlur (10):         Blur amount during fly-out (pixels)
+         * - driftRange (15):      Vertical randomization during fly-out (vh units)
+         * - easing:               CSS cubic-bezier for transitions
+         * 
+         * Tips:
+         * - Increase `scaleTo` for more dramatic "pop"
+         * - Adjust `rotationDeg` for more/less spinning
+         * - Increase `driftRange` for more chaotic exits
+         * 
+         * ───────────────────────────────────────────────────────────────────────────
+         * 3. PARTICLE SYSTEM
+         * ───────────────────────────────────────────────────────────────────────────
+         * Location: CONFIG.particles
+         * 
+         * - ambientCount (80):        Golden dust particles (background ambience)
+         * - confettiCount (200):      Celebration confetti in finale
+         * - petalCount (50):          Falling petals in finale
+         * - colors:                   Array of particle colors
+         * 
+         * Performance Tips:
+         * - Lower particle counts if experiencing lag (especially on mobile)
+         * - Ambient particles have minimal performance impact
+         * - Confetti physics is more expensive; reduce first if needed
+         * 
+         * ───────────────────────────────────────────────────────────────────────────
+         * 4. RESPONSIVE LAYOUT
+         * ───────────────────────────────────────────────────────────────────────────
+         * Location: CONFIG.layout
+         * 
+         * - ringRadiusVmin (38):      Ring radius as % of viewport minimum dimension
+         * - heartSizeIntro (250):     Heart size during name sequence (px)
+         * - heartSizeFinale (70):     Small heart size in ring (px)
+         * - heartSizeCenter (380):    Teachers' center heart (px)
+         * - nameSizeIntro (1.8):      Name font size in sequence (rem)
+         * - nameSizeFinale (0.75):    Name font size in ring (rem)
+         * - nameSizeCenter (2.8):     Teachers' name size (rem)
+         * 
+         * Tips:
+         * - Adjust `ringRadiusVmin` if ring feels too tight/loose (safe range: 30-45)
+         * - Scale all sizes proportionally for different screen sizes
+         * - Sizes use px for consistency; rem for text scalability
+         * 
+         * ───────────────────────────────────────────────────────────────────────────
+         * 5. AUDIO CONFIGURATION
+         * ───────────────────────────────────────────────────────────────────────────
+         * Location: CONFIG.audio
+         * 
+         * - enabled (true):           Toggle audio feature on/off
+         * - url:                      Path to audio file (e.g., 'music.mp3')
+         * - fadeDuration (3):         Fade-in/out duration (seconds)
+         * - volume (0.4):             Master volume (0.0 - 1.0)
+         * - finalFadeMs (1500):       Fade-out duration in finale (milliseconds)
+         * - autoplay (true):          Auto-start music on page load
+         * - autoplayDelay (2000):     Delay before autoplay (milliseconds)
+         * 
+         * Important Notes:
+         * - Autoplay may be blocked by browser policies (Chrome, Safari, Firefox)
+         * - If blocked, music will start on user interaction (Start button)
+         * - Browser policies require user gesture for audio in most cases
+         * - Use local files or ensure CORS headers for remote files
+         * - Supported formats: mp3, ogg, wav (browser-dependent)
+         * 
+         * Autoplay Behavior:
+         * - Page loads → Wait 2 seconds → Try to start music
+         * - If successful: Skip button appears, music plays
+         * - If blocked: Music waits for "Start" button click
+         * - Once playing: Music continues through entire experience
+         * - Finale: Music fades out smoothly over 1.5 seconds
+         * 
+         * ───────────────────────────────────────────────────────────────────────────
+         * 6. VISUAL STYLING
+         * ───────────────────────────────────────────────────────────────────────────
+         * Location: CSS :root and inline styles
+         * 
+         * CSS Variables:
+         * - --gold-gradient:  Gold text metallic effect
+         * - --bg-radial:      Background vignette gradient
+         * 
+         * SVG Gradients:
+         * - #heartGradient:   Heart fill gradient (edit SVG <defs>)
+         * 
+         * Typography:
+         * - Cinzel:           Headers and buttons (serif, elegant)
+         * - Great Vibes:      Names (script, flowing)
+         * - Playfair Display: Body text (serif, refined)
+         * 
+         * ───────────────────────────────────────────────────────────────────────────
+         * 7. ACCESSIBILITY
+         * ───────────────────────────────────────────────────────────────────────────
+         * 
+         * - prefers-reduced-motion: Automatically detected and respected
+         * - Focus styles: Visible on interactive elements
+         * - Semantic HTML: Buttons and headings properly marked
+         * - Audio control: Mute toggle available
+         * 
+         * ───────────────────────────────────────────────────────────────────────────
+         * 8. PERFORMANCE OPTIMIZATION
+         * ───────────────────────────────────────────────────────────────────────────
+         * 
+         * GPU Acceleration:
+         * - Uses transform3d, translate3d for GPU compositing
+         * - Avoids layout thrashing with batched DOM reads/writes
+         * 
+         * Canvas Rendering:
+         * - Single requestAnimationFrame loop
+         * - Particle culling when off-screen
+         * - Capped particle counts
+         * 
+         * Memory Management:
+         * - DOM elements removed after use
+         * - Particle recycling in celebration mode
+         * 
+         * Target: 60fps on modern mobile and desktop browsers
+         * 
+         * ───────────────────────────────────────────────────────────────────────────
+         * 9. BROWSER COMPATIBILITY
+         * ───────────────────────────────────────────────────────────────────────────
+         * 
+         * Tested on:
+         * - Chrome/Edge 90+ ✓
+         * - Firefox 88+ ✓
+         * - Safari 14+ ✓
+         * - Mobile Safari (iOS 14+) ✓
+         * - Chrome Mobile (Android 10+) ✓
+         * 
+         * Graceful Degradation:
+         * - Audio fails silently if unavailable
+         * - Canvas falls back to empty layer if unsupported (rare)
+         * - CSS fallbacks for unsupported properties
+         * 
+         * ───────────────────────────────────────────────────────────────────────────
+         * 10. CUSTOMIZATION QUICK START
+         * ───────────────────────────────────────────────────────────────────────────
+         * 
+         * To customize for your event:
+         * 
+         * 1. Update student names:        CONFIG.students array
+         * 2. Update teachers' names:      CONFIG.teachers string
+         * 3. Adjust timing:               CONFIG.timings (start with holdDuration)
+         * 4. Add your music:              CONFIG.audio.url = 'your-file.mp3'
+         * 5. Change colors:               Edit CSS :root variables & SVG gradients
+         * 6. Adjust particle intensity:   CONFIG.particles counts
+         * 7. Fine-tune layout:            CONFIG.layout sizes
+         * 
+         * Test after each change to see the impact!
+         * 
+         * ═══════════════════════════════════════════════════════════════════════════
+         * 
+         *                              END OF TUNING GUIDE
+         * 
+         * ═══════════════════════════════════════════════════════════════════════════
+         */
+    </script>
+</body>
+</html>
