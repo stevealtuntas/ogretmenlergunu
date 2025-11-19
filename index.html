@@ -204,8 +204,47 @@
             transform: translateY(0) !important;
         }
 
-        /* Accessibility: Reduced Motion */
-        @media (prefers-reduced-motion: reduce) {
+        /* Finale Logos and Text */
+        .boun-logo-container {
+            position: absolute;
+            top: 20px;
+            z-index: 40;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            animation: fadeIn 2s forwards 1s;
+        }
+        
+        .boun-logo-left { left: 20px; }
+        .boun-logo-right { right: 20px; }
+        
+        .boun-logo {
+            width: 80px;
+            height: auto;
+            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+        }
+        
+        .class-name {
+            font-family: 'Cinzel', serif;
+            color: #FFD700;
+            font-size: 1rem;
+            margin-top: 5px;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .finale-date {
+            position: absolute;
+            top: -40px; /* Kalbin üstü */
+            width: 100%;
+            text-align: center;
+            font-family: 'Cinzel', serif;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1rem;
+            letter-spacing: 3px;
+            text-shadow: 0 2px 4px rgba(0,0,0,1);
+        }
             *, *::before, *::after {
                 animation-duration: 0.01ms !important;
                 animation-iteration-count: 1 !important;
@@ -848,6 +887,7 @@
                 bigHeart.id = 'center-heart';
                 bigHeart.style.zIndex = '20';
                 bigHeart.innerHTML = `
+                    <div class="finale-date">24.11.2025</div>
                     ${Utils.getHeartSVG(CONFIG.layout.heartSizeCenter)}
                     <div class="student-name" style="font-size: ${CONFIG.layout.nameSizeCenter}rem; line-height: 1.3; text-align: center; width: 85%; max-width: 300px;">
                         ${CONFIG.teachers.replace(' & ', '<br><span style="font-size:0.7em; opacity:0.9;">&</span><br>')}
@@ -855,6 +895,9 @@
                 `;
                 
                 this.container.appendChild(bigHeart);
+
+                // Add Logos (Boğaziçi & P2.03)
+                this.addLogos();
                 
                 // Animate Big Heart In
                 bigHeart.style.opacity = '0';
@@ -880,6 +923,25 @@
                 setTimeout(() => {
                     document.getElementById('finale-message').classList.add('visible');
                 }, CONFIG.timings.transitionHeart + CONFIG.timings.messageDelay);
+            }
+
+            addLogos() {
+                const logoHTML = `
+                    <img src="boun.logo.png" alt="Boğaziçi Logo" class="boun-logo">
+                    <div class="class-name">P2.03</div>
+                `;
+
+                // Left Logo
+                const leftLogo = document.createElement('div');
+                leftLogo.className = 'boun-logo-container boun-logo-left';
+                leftLogo.innerHTML = logoHTML;
+                this.container.appendChild(leftLogo);
+
+                // Right Logo
+                const rightLogo = document.createElement('div');
+                rightLogo.className = 'boun-logo-container boun-logo-right';
+                rightLogo.innerHTML = logoHTML;
+                this.container.appendChild(rightLogo);
             }
 
             buildRing() {
