@@ -182,19 +182,21 @@
         .student-name {
             font-family: 'Great Vibes', cursive;
             color: #FFD700;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.5); /* Daha iyi okunurluk için gölge artırıldı */
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             white-space: nowrap;
             z-index: 2;
+            letter-spacing: 1px; /* Harf aralığı */
         }
 
         #finale-message {
             opacity: 0;
-            transform: translateY(20px);
+            transform: translateY(40px); /* Biraz daha aşağı */
             transition: all 2s ease-out;
+            bottom: 5%; /* Alt boşluk ayarı */
         }
         
         .visible {
@@ -273,9 +275,8 @@
         </div>
         
         <!-- Finale Message -->
-        <div id="finale-message" class="absolute bottom-[10%] w-full text-center pointer-events-none">
-            <h1 class="font-['Cinzel'] text-2xl md:text-4xl tracking-widest gold-text mb-2">ÖĞRETMENLER GÜNÜNÜZ</h1>
-            <h2 class="font-['Cinzel'] text-xl md:text-3xl tracking-widest text-white/90">KUTLU OLSUN</h2>
+        <div id="finale-message" class="absolute w-full text-center pointer-events-none z-40">
+            <h1 class="font-['Cinzel'] text-2xl md:text-4xl tracking-widest gold-text mb-2">HAPPY TEACHERS' DAY</h1>
         </div>
     </div>
 
@@ -296,9 +297,9 @@
                 "Sude", "Tuana", "Yusuf", "Duru", "Arda", "Kağan", 
                 "Murat", "Yasir", "Ali", "Cihat", "Altan", "Arzum", 
                 "Ayşe", "Baha", "Eylül", "Ege", "Hüseyin", "İrem", 
-                "İsmail", "Semih", "Zeynep", "Aybige", "Samet", "Steve"
+                "İsmail", "Semih", "Zeynep", "Aybige", "Steve"
             ],
-            teachers: "Büşra & Duygu Hoca",
+            teachers: "Büşra Hoca & Duygu Hoca",
             
             // TIMING KNOBS (all in milliseconds unless noted)
             timings: {
